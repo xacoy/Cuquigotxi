@@ -1,6 +1,6 @@
-const CACHE = 'cuquigotxi-v1';
+const CACHE = 'cuquigotxi-v2';
 const FILES = ['./', 'index.html', 'style.css', 'icon.svg', 'manifest.webmanifest',
-  'js/audio.js', 'js/sprites.js', 'js/game.js', 'js/ui.js'];
+  'js/audio.js', 'js/data.js', 'js/sprites.js', 'js/sprites2.js', 'js/scene.js', 'js/game.js', 'js/ui.js'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
 });

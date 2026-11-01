@@ -66,3 +66,14 @@ body{
 .hint{margin:0;font-size:11px;color:#fff;text-align:center;opacity:.9;line-height:1.5;text-shadow:0 1px 0 rgba(150,40,110,.3)}
 @media (pointer:coarse){.hint{display:none}}
 @media (min-width:700px) and (min-height:700px){:root{--sw:min(440px,calc((100dvh - 300px) * 320 / 360))}}
+
+/* Temas de carcasa según el filtro de pantalla */
+body[data-theme="color"] .device{background:linear-gradient(160deg,#9de0ff 0%,#6fa8ff 50%,#a98bff 100%)}
+body[data-theme="classic"]{background:radial-gradient(circle at 30% 10%,#f1efe4 0,#d9d6c4 55%,#bdbaa6 100%)}
+body[data-theme="classic"] .device{background:linear-gradient(160deg,#d9d6c8 0%,#c4c1b0 55%,#a9a692 100%);box-shadow:0 18px 40px rgba(60,60,40,.4),inset 0 3px 0 rgba(255,255,255,.6),inset 0 -6px 0 rgba(60,60,40,.2)}
+body[data-theme="classic"] .brand{color:#6a2f5a;text-shadow:0 1px 0 rgba(255,255,255,.5)}
+body[data-theme="classic"] .hint{color:#4a4a3a;text-shadow:none}
+body[data-theme="classic"] .bezel{background:#5a5870}
+body[data-theme="classic"] .btn.round{background:#a8265a;box-shadow:0 5px 0 #5f1535,0 8px 10px rgba(0,0,0,.25)}
+body[data-theme="classic"] .btn.round.b{background:#a8265a}
+body[data-theme="classic"] #screen{background:#8bac0f}
