@@ -79,5 +79,21 @@ const ACHIEVEMENTS = [
   { id: 'completo', name: 'Completista',       desc: 'Descubre las 13 criaturas',     coins: 150, test: q => Object.keys(q.p.album).length >= 13 },
   { id: 'cosmico',  name: 'Cuidado perfecto',  desc: 'Consigue a Cósmico',            coins: 100, test: q => !!q.p.album.cosmico },
   { id: 'longevo',  name: 'Longevo',           desc: 'Una mascota vive 10 días',      coins: 40, test: q => q.c.maxDays >= 10 },
+  { id: 'racha',    name: 'Constante',         desc: 'Entra 3 días seguidos',         coins: 25, test: q => q.p.streak >= 3 },
+  { id: 'misiones', name: 'Misionero',         desc: 'Cobra 10 misiones',             coins: 30, test: q => q.c.missionsDone >= 10 },
+  { id: 'luchador', name: 'Luchador',          desc: 'Gana un combate',               coins: 20, test: q => q.c.battlesWon >= 1 },
+  { id: 'legado',   name: 'Legado',            desc: 'Hereda de una mascota anterior', coins: 40, test: q => q.p.gen >= 2 },
+];
+const MISSIONS = [
+  { id: 'meals',  text: 'Da de comer 3 veces',        c: 'meals',  n: 3 },
+  { id: 'snacks', text: 'Da 2 dulces',                c: 'snacks', n: 2 },
+  { id: 'wins',   text: 'Gana 2 minijuegos',          c: 'wins',   n: 2 },
+  { id: 'games',  text: 'Juega 3 partidas',           c: 'games',  n: 3 },
+  { id: 'cleans', text: 'Limpia o baña 2 veces',      c: 'cleans', n: 2 },
+  { id: 'trains', text: 'Entrena 2 veces',            c: 'trains', n: 2 },
+  { id: 'pets',   text: 'Acaricia 5 veces', c: 'pets', n: 5 },
+  { id: 'visits', text: 'Visita a un amigo',          c: 'visits', n: 1 },
+  { id: 'battles', text: 'Combate con un amigo',      c: 'battles', n: 1 },
+  { id: 'jobs',   text: 'Completa un trabajo',        c: 'jobs',   n: 1 },
 ];
 const ALBUM_ORDER = ['puchi', 'bunbun', 'kitto', 'lumi', 'nimbo', 'pinchi', 'estrellin', 'nubi', 'grunon', 'cosmico', 'fortachon', 'sabio', 'diva'];

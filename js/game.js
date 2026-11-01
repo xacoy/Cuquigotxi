@@ -6,7 +6,7 @@ const Game = (() => {
   const HUNGER_INT = 300, HAPPY_INT = 420;
   const KEY = 'cuquigotxi.v1';
 
-  const cfg = { sound: true, volume: 1, vibrate: true, speed: 1, nights: true, theme: 'modern', clock: false, weather: true };
+  const cfg = { sound: true, volume: 1, vibrate: true, speed: 1, nights: true, theme: 'modern', clock: false, weather: true, music: false, paused: false, notify: false };
   let pet = null;
   let prof = null;
   let history = [];
@@ -20,8 +20,8 @@ const Game = (() => {
     return {
       coins: 20, inv: {}, owned: { meadow: true, pelota: true },
       equip: { head: null, face: null, neck: null }, bg: 'meadow',
-      album: {}, ach: {}, friends: {}, daily: '',
-      c: { births: 0, meals: 0, snacks: 0, wins: 0, games: 0, buys: 0, equips: 0, trains: 0, jobs: 0, visits: 0, cures: 0, cleans: 0, photos: 0, pets: 0, maxDays: 0 },
+      album: {}, ach: {}, friends: {}, daily: '', streak: 0, missions: null, custom: [], gen: 1, legacy: null,
+      c: { births: 0, meals: 0, snacks: 0, wins: 0, games: 0, buys: 0, equips: 0, trains: 0, jobs: 0, visits: 0, cures: 0, cleans: 0, photos: 0, pets: 0, maxDays: 0, battles: 0, battlesWon: 0, missionsDone: 0 },
     };
   }
   function newPet() {
@@ -104,6 +104,7 @@ const Game = (() => {
     p.alive = false; p.stage = 'dead'; p.call = null; p.work = null; p.causeOfDeath = cause;
     history.unshift({ name: p.name, species: p.species, days: Math.floor(p.age / DAY) + 1, cause });
     history = history.slice(0, 8);
+    if (cause === 'vejez' && p.mistakes <= 4) prof.legacy = { str: Math.floor(p.str * .3), mind: Math.floor(p.mind * .3), charm: Math.floor(p.charm * .3) };
     emit('die', { cause });
   }
 
@@ -209,6 +210,7 @@ const Game = (() => {
   /* Avanza la simulación hasta "now" (soporta ausencias largas). */
   function tickTo(now) {
     const p = pet;
+    if (cfg.paused) { p.lastSeen = now; return; }
     const elapsed = (now - p.lastSeen) / 1000;
     if (elapsed < 0) { p.lastSeen = now; return; }
     let steps = Math.floor(elapsed * cfg.speed);
@@ -345,7 +347,7 @@ const Game = (() => {
 
   /* ---------- Amigos ---------- */
   function visit(id) {
-    const p = pet, f = FRIENDS.find(x => x.id === id), now = Date.now();
+    const p = pet, f = allFriends().find(x => x.id === id), now = Date.now();
     if (!f) return R(false, '¿Quién?');
     if (p.work) return busyMsg();
     if (p.sleeping) return sleepingMsg();
@@ -358,6 +360,76 @@ const Game = (() => {
     if (Math.random() < .55) { const n = 2 + Math.floor(Math.random() * 5); prof.coins += n; gift = ` Te regala ${n} monedas.`; }
     else if (Math.random() < .35) { const k = pick(['manzana', 'helado', 'sopa']); prof.inv[k] = (prof.inv[k] || 0) + 1; gift = ` Te regala: ${FOODS[k].name}.`; }
     return R(true, '¡Pasaron un rato genial!' + gift, 'visit', { friend: f, lv: fr.lv });
+  }
+
+  function allFriends() { return FRIENDS.concat(prof.custom || []); }
+  /* stats de un amigo para combatir: personalizados traen los suyos; los demás crecen con la amistad */
+  function friendPower(f) {
+    if (f.stats) return f.stats;
+    const lv = (prof.friends[f.id] || { lv: 0 }).lv, b = 8 + lv * 6;
+    return [b + Math.floor(Math.random() * 7), b + Math.floor(Math.random() * 7), b + Math.floor(Math.random() * 7)];
+  }
+  function startBattle(id) {
+    const p = pet, f = allFriends().find(x => x.id === id);
+    if (!f) return R(false, '¿Contra quién?');
+    if (p.work) return busyMsg();
+    if (p.sleeping) return sleepingMsg();
+    if (p.energy < 1) return R(false, 'Está agotado, déjalo descansar');
+    if (p.hunger < 1) return R(false, 'Tiene demasiada hambre');
+    if (p.happy < 1) return R(false, 'No tiene ganas…');
+    p.energy--;
+    return R(true, `¡Combate contra ${f.name}!`, 'battle', { friend: f, opp: friendPower(f), me: [p.str, p.mind, p.charm] });
+  }
+  function battleResult(win, id) {
+    const p = pet, f = allFriends().find(x => x.id === id), fr = prof.friends[id] = prof.friends[id] || { lv: 0, cd: 0 };
+    prof.c.battles++; p.hunger = Math.max(0, p.hunger - (Math.random() < .5 ? 1 : 0)); p.weight = Math.max(1, p.weight - 1);
+    const coins = win ? 10 : 2;
+    prof.coins += coins; p.bond = clamp(p.bond + 1, 0, 99);
+    if (win) { prof.c.battlesWon++; prof.c.wins++; p.happy = Math.min(4, p.happy + 1); p.str = clamp(p.str + 1, 0, 99); fr.lv = Math.min(5, fr.lv + (Math.random() < .4 ? 1 : 0)); }
+    else p.happy = Math.max(0, p.happy - (Math.random() < .5 ? 1 : 0));
+    check();
+    return coins;
+  }
+  function myCode() {
+    const p = pet, o = { n: p.name, s: p.species || 'puchi', a: [p.str, p.mind, p.charm] };
+    return 'CUQUI1:' + btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+  }
+  function addFriendCode(code) {
+    try {
+      const raw = String(code || '').trim();
+      if (!raw.startsWith('CUQUI1:')) throw new Error('formato');
+      const o = JSON.parse(decodeURIComponent(escape(atob(raw.slice(7)))));
+      const name = String(o.n || 'Amigo').slice(0, 12), species = SPECIES[o.s] ? o.s : 'puchi';
+      const a = (Array.isArray(o.a) ? o.a : [0, 0, 0]).slice(0, 3).map(v => clamp(parseInt(v, 10) || 0, 0, 99));
+      if (prof.custom.length >= 6) return R(false, 'Ya tienes 6 amigos por código');
+      if (allFriends().some(f => f.name === name)) return R(false, 'Ya tienes un amigo con ese nombre');
+      prof.custom.push({ id: 'c' + Date.now().toString(36), name, species, line: '¡Hola desde otro Cuquigotxi!', stats: a.map(v => 8 + Math.floor(v * .8)) });
+      return R(true, `¡${name} es ahora tu amigo!`, 'buy');
+    } catch (e) { return R(false, 'Código no válido'); }
+  }
+
+  /* ---------- Misiones diarias ---------- */
+  function dayKey() { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; }
+  function ensureMissions() {
+    const k = dayKey();
+    if (prof.missions && prof.missions.day === k) return prof.missions;
+    const pool = MISSIONS.slice();
+    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    prof.missions = { day: k, list: pool.slice(0, 3).map(m => ({ id: m.id, base: prof.c[m.c] || 0, done: false })), bonus: false };
+    return prof.missions;
+  }
+  function missionList() {
+    const m = ensureMissions();
+    return m.list.map(x => { const d = MISSIONS.find(q => q.id === x.id); return { text: d.text, n: d.n, prog: Math.min(d.n, (prof.c[d.c] || 0) - x.base), done: x.done }; });
+  }
+  function claimMission(i) {
+    const m = ensureMissions(), x = m.list[i], d = MISSIONS.find(q => q.id === x.id);
+    if (x.done) return R(false, 'Ya cobrada');
+    if ((prof.c[d.c] || 0) - x.base < d.n) return R(false, 'Aún no la has completado');
+    x.done = true; prof.coins += 10; prof.c.missionsDone++;
+    let msg = '¡Misión cumplida! +10 monedas';
+    if (m.list.every(q => q.done) && !m.bonus) { m.bonus = true; prof.coins += 20; msg = '¡Todas las misiones! +30 monedas'; }
+    return R(true, msg, 'buy');
   }
 
   /* ---------- Tienda / inventario ---------- */
@@ -390,18 +462,26 @@ const Game = (() => {
   function countPhoto() { prof.c.photos++; check(); }
 
   function checkDaily() {
-    const d = new Date(), key = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+    const key = dayKey();
     if (prof.daily === key) return;
     const first = prof.daily === '';
+    const y = new Date(Date.now() - 86400000), yk = `${y.getFullYear()}-${y.getMonth() + 1}-${y.getDate()}`;
+    prof.streak = prof.daily === yk ? prof.streak + 1 : 1;
     prof.daily = key;
-    const coins = first ? 30 : 10 + Math.floor(Math.random() * 11), k = pick(['manzana', 'helado', 'vitamina']);
+    const coins = first ? 30 : Math.min(40, 10 + prof.streak * 4 + Math.floor(Math.random() * 6)), k = pick(['manzana', 'helado', 'vitamina']);
     prof.coins += coins; prof.inv[k] = (prof.inv[k] || 0) + 1;
-    emit('daily', { coins, item: FOODS[k].name });
+    emit('daily', { coins, item: FOODS[k].name, streak: prof.streak });
   }
 
   function warmEgg() { if (pet.stage === 'egg') { pet.eggTime = Math.min(EGG_TIME, pet.eggTime + 3); } }
   function rename(name) { pet.name = String(name || '').trim().slice(0, 12) || pet.name; }
-  function restart() { pet = newPet(); }
+  function restart() {
+    pet = newPet();
+    if (prof.legacy) {
+      pet.str = prof.legacy.str; pet.mind = prof.legacy.mind; pet.charm = prof.legacy.charm;
+      prof.legacy = null; prof.gen++; prof.coins += 30; emit('legacy');
+    }
+  }
 
   /* ---------- Persistencia ---------- */
   function exportData() { return JSON.stringify({ app: 'cuquigotxi', v: 2, pet, cfg, history, prof }); }
@@ -439,6 +519,6 @@ const Game = (() => {
     get history() { return history; },
     events, load, save, tickTo, restart, exportData, importData,
     feed, eatItem, toggleLight, medicine, clean, shower, scold, cuddle, useToy, train, startWork, cancelWork, visit,
-    buy, equip, setBg, catalogOf, playResult, countPhoto, checkDaily, warmEgg, rename, quality, isNight, check,
+    buy, equip, setBg, catalogOf, allFriends, startBattle, battleResult, myCode, addFriendCode, missionList, claimMission, ensureMissions, playResult, countPhoto, checkDaily, warmEgg, rename, quality, isNight, check,
   };
 })();

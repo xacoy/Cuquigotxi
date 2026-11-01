@@ -175,6 +175,12 @@ Object.assign(ICONS, {
   trophy(c) { c.fillStyle = '#ffc93c'; c.beginPath(); c.moveTo(-8, -9); c.lineTo(8, -9); c.quadraticCurveTo(8, 3, 0, 4); c.quadraticCurveTo(-8, 3, -8, -9); c.fill(); c.strokeStyle = '#ffc93c'; c.lineWidth = 2; for (const s of [-1, 1]) { c.beginPath(); c.arc(s * 9, -5, 3.5, s > 0 ? -Math.PI / 2 : Math.PI / 2, s > 0 ? Math.PI / 2 : -Math.PI / 2, s < 0); c.stroke(); } c.fillRect(-1.5, 4, 3, 4); rrect(c, -6, 7, 12, 4, 1.5); c.fillStyle = '#b87810'; c.fill(); },
   camera(c) { rrect(c, -11, -6, 22, 16, 4); c.fillStyle = '#6b6f85'; c.fill(); rrect(c, -5, -9, 8, 4, 1.5); c.fillStyle = '#6b6f85'; c.fill(); ell(c, 0, 2, 6, 6, '#fff'); ell(c, 0, 2, 3.6, 3.6, '#4a7cff'); ell(c, 8, -3, 1.6, 1.6, '#ff5c8a'); },
 });
+Object.assign(ICONS, {
+  quest(c) { rrect(c, -9, -10, 18, 21, 3); c.fillStyle = '#fff'; c.fill(); c.strokeStyle = '#6b6f85'; c.lineWidth = 2; c.stroke(); rrect(c, -4, -13, 8, 5, 2); c.fillStyle = '#6b6f85'; c.fill();
+    c.strokeStyle = '#4fcf7a'; c.lineWidth = 2.4; c.lineCap = 'round'; c.lineJoin = 'round'; c.beginPath(); c.moveTo(-5, -2); c.lineTo(-3, 0); c.lineTo(1, -5); c.stroke();
+    c.strokeStyle = '#c9c2e6'; c.lineWidth = 2; c.beginPath(); c.moveTo(-5, 5); c.lineTo(5, 5); c.moveTo(-5, 9); c.lineTo(3, 9); c.stroke(); },
+  battle(c) { c.strokeStyle = '#6b6f85'; c.lineWidth = 3; c.lineCap = 'round'; c.beginPath(); c.moveTo(-9, 9); c.lineTo(9, -9); c.moveTo(9, 9); c.lineTo(-9, -9); c.stroke(); drawStar(c, 0, 0, 5, '#ffc93c'); },
+});
 Object.assign(ICONS, { disc: ICONS.care });
 
 /* ---------- Cartas y manos (minijuegos) ---------- */

@@ -44,7 +44,13 @@ En **Ajustes → Pantalla** puedes elegir cómo se ve el juego (la carcasa tambi
 - 🛁 **Baño** e higiene, 💞 caricias y afecto, 🎸 juguetes con animaciones
 - 💼 **Trabajo**: tu mascota se va un rato (3 oficios) y vuelve con monedas
 - 👫 **Amigos**: visita a 6 amigos con nivel de amistad y regalos
-- 🏆 **21 logros** y 📖 **álbum** de criaturas descubiertas
+- ⚔️ **Combates** por turnos contra amigos (Golpe, Ingenio y Truco, estilo piedra-papel-tijera) que usan tus estadísticas
+- 📋 **Misiones diarias** con bonus por completarlas y **racha** de días seguidos
+- 🔗 **Códigos de amigo**: comparte tu mascota con un texto y añade a otros jugadores como amigos (con sus estadísticas)
+- 🧬 **Legado**: si muere de vejez con buen cuidado, el siguiente huevo hereda habilidades y monedas
+- 👆 **Táctil**: toca a la mascota para acariciarla y los iconos para moverte; burbujas de pensamiento que muestran lo que necesita
+- 🎵 **Música** de fondo, ⏸️ **pausa del tiempo** y 🔔 avisos del navegador cuando te llama
+- 🏆 **25 logros** y 📖 **álbum** de criaturas descubiertas
 - 🧑‍🎤 **Personalidad** (glotón, juguetón, tranquilo, travieso, sociable) y comida favorita
 - 🌦️ Clima real (sol, nubes, lluvia, nieve, tormenta) y ciclo día/noche
 - 📷 Modo foto, ⏰ reloj opcional, 🔊 volumen, 📳 vibración
