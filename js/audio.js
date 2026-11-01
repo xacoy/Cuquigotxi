@@ -3,6 +3,7 @@
 const Sound = (() => {
   let ctx = null;
   let enabled = true;
+  let vol = 1;
   const S = {
     nav:    [[880, 0, .04, 'square', .03]],
     ok:     [[660, 0, .05, 'square', .04], [990, .05, .08, 'square', .04]],
@@ -22,6 +23,13 @@ const Sound = (() => {
     evolve: [[392, 0, .12, 'triangle', .07], [523, .12, .12, 'triangle', .07], [659, .24, .12, 'triangle', .07],
              [784, .36, .12, 'triangle', .07], [1046, .48, .12, 'triangle', .07], [784, .6, .1, 'triangle', .07], [1318, .7, .4, 'triangle', .07]],
     hatch:  [[300, 0, .05, 'square', .05], [300, .12, .05, 'square', .05], [600, .3, .1, 'triangle', .07], [900, .4, .2, 'triangle', .07]],
+    coin:   [[1318, 0, .06, 'square', .035], [1760, .07, .12, 'square', .035]],
+    buy:    [[880, 0, .06, 'triangle', .06], [1175, .07, .06, 'triangle', .06], [1568, .14, .14, 'triangle', .06]],
+    photo:  [[2000, 0, .04, 'square', .03], [1000, .05, .1, 'sawtooth', .02]],
+    flip:   [[700, 0, .04, 'triangle', .05], [900, .04, .05, 'triangle', .05]],
+    ach:    [[784, 0, .1, 'triangle', .07], [988, .1, .1, 'triangle', .07], [1318, .2, .1, 'triangle', .07], [1568, .3, .3, 'triangle', .07]],
+    train:  [[330, 0, .08, 'square', .04], [440, .1, .08, 'square', .04], [550, .2, .12, 'square', .04]],
+    guitar: [[330, 0, .12, 'triangle', .07], [392, .15, .12, 'triangle', .07], [494, .3, .12, 'triangle', .07], [392, .45, .2, 'triangle', .07]],
     die:    [[440, 0, .3, 'triangle', .07], [349, .3, .3, 'triangle', .07], [294, .6, .3, 'triangle', .07], [220, .9, .7, 'triangle', .07]],
   };
   function unlock() {
@@ -41,7 +49,7 @@ const Sound = (() => {
       const o = c.createOscillator(), g = c.createGain();
       o.type = type; o.frequency.value = f;
       g.gain.setValueAtTime(0.0001, t0 + s);
-      g.gain.exponentialRampToValueAtTime(v, t0 + s + 0.01);
+      g.gain.exponentialRampToValueAtTime(Math.max(0.0002, v * vol), t0 + s + 0.01);
       g.gain.exponentialRampToValueAtTime(0.0001, t0 + s + d);
       o.connect(g).connect(c.destination);
       o.start(t0 + s); o.stop(t0 + s + d + 0.02);
@@ -50,6 +58,7 @@ const Sound = (() => {
   return {
     play, unlock,
     setEnabled(v) { enabled = !!v; },
+    setVolume(v) { vol = Math.max(0, Math.min(2, v)); },
     get enabled() { return enabled; },
   };
 })();

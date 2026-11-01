@@ -140,6 +140,8 @@ function drawPet(c, sp, o) {
     c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 1.5; c.stroke();
   }
 
+  if (sp.drawBack) sp.drawBack(c, rx, ry, t, wob);
+
   // Brazos y pies (detrás del cuerpo)
   const wave = mood === 'happy' ? Math.sin(t * 10) * .5 : 0;
   for (const s of [-1, 1]) {
@@ -161,7 +163,7 @@ function drawPet(c, sp, o) {
     g.addColorStop(0, sp.body); g.addColorStop(1, sp.body2);
   }
   c.fillStyle = g; c.fill();
-  c.strokeStyle = 'rgba(40,20,70,.14)'; c.lineWidth = 2; c.stroke();
+  c.strokeStyle = o.outline ? 'rgba(20,10,40,.9)' : 'rgba(40,20,70,.14)'; c.lineWidth = o.outline ? 3.2 : 2; c.stroke();
 
   // Tinte enfermo / senior
   if (o.sick) { c.save(); blobPath(c, rx, ry, f); c.clip(); c.fillStyle = 'rgba(120,200,90,.38)'; c.fillRect(-rx, -ry, rx * 2, ry * 2); c.restore(); }
@@ -242,11 +244,19 @@ function drawPet(c, sp, o) {
     c.beginPath(); c.moveTo(-rx * .14, my - 1); c.quadraticCurveTo(0, my + 7, rx * .14, my - 1); c.stroke();
   }
 
+  if (sp.drawFront) sp.drawFront(c, rx, ry, t, mood);
+  if (o.acc) {
+    const geo = { rx, ry, ex, ey, er, my, t };
+    for (const slot of ['neck', 'face', 'head']) if (o.acc[slot]) drawAccessory(c, o.acc[slot], geo);
+  }
+
   // Accesorios senior
   if (o.senior) {
+    if (!(o.acc && o.acc.face)) {
     c.strokeStyle = '#7b6a4a'; c.lineWidth = 2;
     for (const s of [-1, 1]) { c.beginPath(); c.arc(s * ex, ey, er * 1.55, 0, Math.PI * 2); c.stroke(); }
     c.beginPath(); c.moveTo(-ex + er * 1.5, ey); c.lineTo(ex - er * 1.5, ey); c.stroke();
+    }
     c.beginPath(); c.moveTo(-rx * .2, my - 5); c.quadraticCurveTo(0, my - 14, rx * .2, my - 5); c.strokeStyle = '#f2f2f2'; c.lineWidth = 5; c.stroke();
   }
   c.restore();
