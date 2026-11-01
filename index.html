@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#ff9db8">
+<meta name="description" content="Cuquigotxi: una mascota virtual moderna con todas las funciones clásicas del Tamagotchi.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Cuquigotxi</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="device" id="device">
+  <div class="brand">Cuquigotxi</div>
+  <div class="bezel">
+    <canvas id="screen" width="320" height="360" aria-label="Pantalla de Cuquigotxi"></canvas>
+  </div>
+  <div class="controls" id="controls">
+    <div class="dpad">
+      <button class="btn up" data-key="up" aria-label="Arriba"></button>
+      <button class="btn left" data-key="left" aria-label="Izquierda"></button>
+      <button class="btn right" data-key="right" aria-label="Derecha"></button>
+      <button class="btn down" data-key="down" aria-label="Abajo"></button>
+      <span class="dpad-center"></span>
+    </div>
+    <div class="ab">
+      <button class="btn round b" data-key="back" aria-label="B, atrás">B</button>
+      <button class="btn round a" data-key="ok" aria-label="A, aceptar">A</button>
+    </div>
+    <div class="ss">
+      <button class="btn pill" data-key="select" aria-label="Select, estadísticas"><i>SELECT</i></button>
+      <button class="btn pill" data-key="start" aria-label="Start, ajustes"><i>START</i></button>
+    </div>
+  </div>
+  <p class="hint">Teclado: <b>←→↑↓</b> mover · <b>Z / Enter</b> aceptar · <b>X / Esc</b> atrás · <b>Tab</b> ajustes · <b>Shift</b> estadísticas</p>
+</main>
+<script src="js/audio.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/game.js"></script>
+<script src="js/ui.js"></script>
+<script>
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
