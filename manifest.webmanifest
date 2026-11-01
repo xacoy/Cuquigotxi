@@ -1,0 +1,11 @@
+{
+  "name": "Cuquigotxi",
+  "short_name": "Cuquigotxi",
+  "description": "Mascota virtual moderna con todas las funciones clásicas del Tamagotchi.",
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffe3ef",
+  "theme_color": "#ff9db8",
+  "icons": [{"src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}]
+}
