@@ -3,9 +3,17 @@
 (() => {
   const W = 320, H = 360, GROUND = 292;
   const cv = document.getElementById('screen');
-  const dpr = Math.min(3, Math.max(1, window.devicePixelRatio || 1));
-  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-  const renderer = Scene.makeRenderer(cv, dpr);
+  let dpr = 1, renderer = null;
+  function fitCanvas() {
+    const css = cv.clientWidth || W, want = Math.min(4, Math.max(1, (window.devicePixelRatio || 1) * css / W));
+    if (renderer && Math.abs(want - dpr) < .12) return;
+    dpr = want; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    renderer = Scene.makeRenderer(cv, dpr);
+  }
+  fitCanvas();
+  addEventListener('resize', fitCanvas);
+  addEventListener('orientationchange', () => setTimeout(fitCanvas, 250));
+  if (window.ResizeObserver) new ResizeObserver(fitCanvas).observe(cv);
   let c = null;   // contexto actual (lo fija el renderizador)
 
   const MENU = [

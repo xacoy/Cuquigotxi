@@ -1,16 +1,21 @@
+/* ---- Diseño adaptable: móvil vertical, móvil horizontal, tableta y escritorio ---- */
 :root{
-  --sw: min(calc(100vw - 52px), calc((100dvh - 300px) * 320 / 360), 440px);
+  --btn: clamp(40px, min(12.5vw, 6.4dvh), 66px);          /* tamaño base de los botones */
+  --ctrl: calc(var(--btn) * 3 + 178px);                    /* alto aproximado de carcasa + mando */
+  --sw: min(calc(100vw - 52px), calc((100dvh - var(--ctrl)) * 320 / 360), 620px);  /* ancho de pantalla */
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%}
+html{height:100%;-webkit-text-size-adjust:100%}
 body{
+  margin:0;min-height:100dvh;
   background:radial-gradient(circle at 30% 10%,#ffe3ef 0,#e9defe 45%,#cfe8ff 100%);
   font-family:"Nunito","Trebuchet MS","Segoe UI",system-ui,sans-serif;
-  display:flex;align-items:center;justify-content:center;
+  display:flex;overflow-x:hidden;
   overscroll-behavior:none;user-select:none;-webkit-user-select:none;
-  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  padding:max(8px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));
 }
 .device{
+  margin:auto;
   width:calc(var(--sw) + 44px);
   background:linear-gradient(160deg,#ffb3cc 0%,#ff8fb4 45%,#c79bff 100%);
   border-radius:38px 38px 56px 56px;
@@ -19,7 +24,7 @@ body{
   display:flex;flex-direction:column;align-items:center;gap:10px;
 }
 .brand{
-  font-weight:900;letter-spacing:.14em;text-transform:uppercase;font-size:13px;
+  font-weight:900;letter-spacing:.14em;text-transform:uppercase;font-size:clamp(11px,1.6vmin + 6px,15px);
   color:#fff;text-shadow:0 2px 0 rgba(150,40,110,.35);
 }
 .bezel{
@@ -40,9 +45,10 @@ body{
   box-shadow:0 5px 0 #2a1f44,0 8px 10px rgba(0,0,0,.25);
   transition:transform .05s,box-shadow .05s;
 }
+.btn:focus-visible{outline:3px solid #fff7a8;outline-offset:2px}
 .btn.on,.btn:active{transform:translateY(4px);box-shadow:0 1px 0 #2a1f44}
 .dpad{
-  display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(3,48px);
+  display:grid;grid-template-columns:repeat(3,var(--btn));grid-template-rows:repeat(3,var(--btn));
 }
 .dpad .btn{border-radius:10px;position:relative}
 .dpad .up{grid-area:1/2;border-radius:12px 12px 4px 4px}
@@ -55,17 +61,59 @@ body{
 .down::after{border-top:10px solid #c9b8ee!important;margin-top:3px}
 .left::after{border-right:10px solid #c9b8ee!important;margin-left:-3px}
 .right::after{border-left:10px solid #c9b8ee!important;margin-left:3px}
-.ab{display:flex;gap:16px;transform:rotate(-18deg);align-items:center}
-.ab .a{transform:translateY(-14px)}
-.btn.round{width:58px;height:58px;border-radius:50%;background:#ff5c8a;box-shadow:0 5px 0 #b02856,0 8px 10px rgba(0,0,0,.25);font-size:20px}
+.ab{display:flex;gap:calc(var(--btn) * .33);transform:rotate(-18deg);align-items:center}
+.ab .a{transform:translateY(calc(var(--btn) * -.3))}
+.btn.round{width:calc(var(--btn) * 1.2);height:calc(var(--btn) * 1.2);border-radius:50%;background:#ff5c8a;box-shadow:0 5px 0 #b02856,0 8px 10px rgba(0,0,0,.25);font-size:calc(var(--btn) * .4)}
 .btn.round.b{background:#ffb347;box-shadow:0 5px 0 #b86b0d,0 8px 10px rgba(0,0,0,.25)}
 .btn.round.on,.btn.round:active{box-shadow:0 1px 0 #7a1b3a}
 .ss{grid-column:1/3;display:flex;gap:22px}
-.btn.pill{width:78px;height:22px;border-radius:12px;transform:rotate(-18deg);font-size:9px;letter-spacing:.12em;background:#6b5a92}
+.btn.pill{width:calc(var(--btn) * 1.6);height:calc(var(--btn) * .46);border-radius:12px;transform:rotate(-18deg);font-size:calc(var(--btn) * .19);letter-spacing:.12em;background:#6b5a92}
 .btn.pill i{font-style:normal;opacity:.9}
 .hint{margin:0;font-size:11px;color:#fff;text-align:center;opacity:.9;line-height:1.5;text-shadow:0 1px 0 rgba(150,40,110,.3)}
 @media (pointer:coarse){.hint{display:none}}
-@media (min-width:700px) and (min-height:700px){:root{--sw:min(440px,calc((100dvh - 300px) * 320 / 360))}}
+
+/* Tableta / escritorio en vertical */
+@media (min-width:700px) and (min-height:700px){
+  :root{--ctrl:calc(var(--btn) * 3 + 262px)}
+  .device{padding:16px 30px 24px;gap:14px}
+  .bezel{padding:16px;border-radius:30px}
+  #screen{border-radius:14px}
+  .hint{font-size:13px}
+}
+
+/* Móvil muy pequeño */
+@media (max-width:359px){
+  .device{padding:10px 14px 14px;width:calc(var(--sw) + 32px)}
+  :root{--sw:min(calc(100vw - 40px),calc((100dvh - var(--ctrl)) * 320 / 360))}
+  .bezel{padding:8px;border-radius:18px}
+}
+
+/* Pantallas apaisadas (móvil girado, tableta, escritorio): pantalla al centro, cruceta a la izquierda y A/B a la derecha */
+@media (min-aspect-ratio:13/10){
+  :root{
+    --btn: clamp(38px, 11dvh, 68px);
+    --hintH: 0px;
+    --sw: min(calc((100dvh - 86px - var(--hintH)) * 320 / 360), calc(100vw - 6 * var(--btn) - 130px), 620px);
+  }
+  .device{
+    width:auto;max-width:100%;display:grid;grid-template-columns:auto auto auto;
+    grid-template-areas:"dpad screen ab" "ss screen ab";
+    align-items:center;justify-items:center;column-gap:clamp(12px,3vw,40px);row-gap:6px;
+    border-radius:46px;padding:14px clamp(14px,3vw,34px);
+  }
+  .brand{display:none}
+  .controls{display:contents}
+  .bezel{grid-area:screen;padding:10px;border-radius:22px}
+  .dpad{grid-area:dpad;align-self:end}
+  .ab{grid-area:ab}
+  .ss{grid-area:ss;grid-column:auto;align-self:start;gap:14px}
+  .btn.pill{width:calc(var(--btn) * 1.3)}
+}
+@media (min-aspect-ratio:13/10) and (pointer:fine){
+  :root{--hintH:34px}
+  .device{grid-template-areas:"dpad screen ab" "ss screen ab" "hint hint hint"}
+  .hint{grid-area:hint;display:block;font-size:12px;padding-top:2px}
+}
 
 /* Temas de carcasa según el filtro de pantalla */
 body[data-theme="color"] .device{background:linear-gradient(160deg,#9de0ff 0%,#6fa8ff 50%,#a98bff 100%)}

@@ -55,6 +55,7 @@ En **Ajustes → Pantalla** puedes elegir cómo se ve el juego (la carcasa tambi
 - 🌦️ Clima real (sol, nubes, lluvia, nieve, tormenta) y ciclo día/noche
 - 📷 Modo foto, ⏰ reloj opcional, 🔊 volumen, 📳 vibración
 - 💾 Guardado automático, exportar/importar partida, mascota viva aunque cierres la pestaña
+- 📱 **Responsive**: se adapta a móvil vertical y horizontal (cruceta y A/B a los lados), tableta y escritorio, con el lienzo a la resolución real de la pantalla
 - ⏩ Velocidad ajustable (1x / 4x / 16x / 60x) y PWA instalable con modo offline
 
 ## Estructura
