@@ -13,10 +13,10 @@
     { id: 'med', label: 'Medicina', icon: 'med' }, { id: 'clean', label: 'Limpieza', icon: 'clean' }, { id: 'care', label: 'Cariño', icon: 'care' },
     { id: 'train', label: 'Entrenar', icon: 'train' }, { id: 'shop', label: 'Tienda', icon: 'shop' }, { id: 'bag', label: 'Mochila', icon: 'bag' },
     { id: 'work', label: 'Trabajo', icon: 'work' }, { id: 'town', label: 'Amigos', icon: 'town' }, { id: 'album', label: 'Álbum', icon: 'album' },
-    { id: 'ach', label: 'Logros', icon: 'trophy' }, { id: 'photo', label: 'Foto', icon: 'camera' }, { id: 'stats', label: 'Estado', icon: 'stats' },
+    { id: 'quest', label: 'Misiones', icon: 'quest' }, { id: 'ach', label: 'Logros', icon: 'trophy' }, { id: 'photo', label: 'Foto', icon: 'camera' }, { id: 'stats', label: 'Estado', icon: 'stats' },
     { id: 'settings', label: 'Ajustes', icon: 'settings' },
   ];
-  const ANYTIME = ['shop', 'bag', 'album', 'ach', 'photo', 'stats', 'settings'];
+  const ANYTIME = ['shop', 'bag', 'album', 'ach', 'quest', 'photo', 'stats', 'settings'];
   const SPEEDS = [1, 4, 16, 60];
   const THEMES = [['modern', 'Moderno'], ['color', 'Color retro'], ['classic', 'Clásico verde']];
   const VOLUMES = [['Bajo', .4], ['Medio', 1], ['Alto', 1.8]];
@@ -250,12 +250,40 @@
   }
   function openTown() {
     const prof = PR();
-    openList({ title: 'Amigos', footer: 'Visita cada 5 min a cada amigo', items: FRIENDS.map(f => ({
+    const items = Game.allFriends().map(f => ({
       label: f.name, val: () => { const fr = prof.friends[f.id]; const lv = fr ? fr.lv : 0; return Date.now() < (fr ? fr.cd : 0) ? `Nv ${lv} · ocupado` : `Nv ${lv}/5`; },
       draw: () => drawPet(c, SPECIES[f.species], { x: 0, y: 12, t: ui.t, mood: 'happy', scale: .22, outline: retro() }),
-      act: act(() => applyResult(Game.visit(f.id))),
-    })) });
+      act: () => openList({ title: f.name, items: [
+        { label: 'Visitar', val: () => '', draw: () => ICONS.town(c), act: act(() => applyResult(Game.visit(f.id))) },
+        { label: 'Combatir', val: () => '', draw: () => ICONS.battle(c), act: act(() => { const r = Game.startBattle(f.id); if (r.ok) startBattleMode(r); else applyResult(r); }) },
+      ] }),
+    }));
+    items.push({ label: 'Mi código de amigo', val: () => '', draw: () => text('#', 0, 0, 16, '#6a7cff', 'center', 900), act: shareCode });
+    items.push({ label: 'Añadir amigo con código', val: () => '', draw: () => text('+', 0, 0, 18, '#4fcf7a', 'center', 900), act: addFriend });
+    openList({ title: 'Amigos', footer: 'Visita o combate · cada amigo descansa 5 min', items });
   }
+  function shareCode() {
+    const code = Game.myCode();
+    try { if (navigator.clipboard) navigator.clipboard.writeText(code); } catch (e) { /* noop */ }
+    try { window.prompt('Tu código de amigo (ya copiado). Envíaselo a un amigo:', code); } catch (e) { /* noop */ }
+    say('Código copiado', 2.5);
+  }
+  function addFriend() {
+    let s = null; try { s = window.prompt('Pega el código de tu amigo:'); } catch (e) { /* noop */ }
+    if (!s) return;
+    const r = Game.addFriendCode(s); applyResult(r);
+    if (r.ok) { closeAll(); openTown(); }
+  }
+  function openMissions() {
+    const prof = PR(); Game.ensureMissions();
+    const items = [0, 1, 2].map(i => ({
+      label: Game.missionList()[i].text, draw: () => ICONS.quest(c),
+      val: () => { const q = Game.missionList()[i]; return q.done ? 'Cobrada' : q.prog >= q.n ? '¡Cobrar!' : `${q.prog}/${q.n}`; },
+      act: () => applyResult(Game.claimMission(i)),
+    }));
+    openList({ title: 'Misiones de hoy', coins: true, items, footer: `Racha: ${prof.streak} día${prof.streak === 1 ? '' : 's'} · +20 extra por las 3` });
+  }
+
   function openAchievements() {
     const prof = PR();
     openList({ title: `Logros ${Object.keys(prof.ach).length}/${ACHIEVEMENTS.length}`, footer: 'Cada logro da monedas', items: ACHIEVEMENTS.map(a => ({
@@ -276,6 +304,9 @@
       { label: 'Ciclo día/noche', adj: true, val: () => cfg.nights ? 'Real' : 'Siempre día', act: () => { Game.tickTo(Date.now()); cfg.nights = !cfg.nights; Sound.play('ok'); } },
       { label: 'Clima', adj: true, val: () => cfg.weather ? 'Real' : 'Sin clima', act: () => { cfg.weather = !cfg.weather; Sound.play('ok'); } },
       { label: 'Reloj en pantalla', adj: true, val: () => cfg.clock ? 'Sí' : 'No', act: () => { cfg.clock = !cfg.clock; Sound.play('ok'); } },
+      { label: 'Música', adj: true, val: () => cfg.music ? 'Sí' : 'No', act: () => { cfg.music = !cfg.music; Sound.setMusic(cfg.music); Sound.play('ok'); } },
+      { label: 'Pausar el tiempo', adj: true, val: () => cfg.paused ? 'Sí' : 'No', act: () => { Game.tickTo(Date.now()); cfg.paused = !cfg.paused; if (!cfg.paused) P().lastSeen = Date.now(); Sound.play('ok'); } },
+      { label: 'Avisos del navegador', adj: true, val: () => cfg.notify ? 'Sí' : 'No', act: () => { cfg.notify = !cfg.notify; try { if (cfg.notify && 'Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch (e) { /* noop */ } Sound.play('ok'); } },
       { label: 'Nombre', val: () => P().name, act: () => { try { const n = window.prompt('Nombre de tu mascota:', P().name); if (n) Game.rename(n); } catch (e) { /* noop */ } } },
       { label: 'Ayuda', val: () => '', act: () => { closeAll(); ui.mode = 'help'; } },
       { label: 'Exportar partida', val: () => '', act: exportSave },
@@ -313,6 +344,7 @@
       case 'bag': openBag(); Sound.play('ok'); return;
       case 'album': ui.mode = 'album'; ui.album = 0; Sound.play('ok'); return;
       case 'ach': openAchievements(); Sound.play('ok'); return;
+      case 'quest': openMissions(); Sound.play('ok'); return;
       case 'photo': takePhoto(); return;
       case 'light': applyResult(Game.toggleLight()); return;
       case 'med': if (p.work) { say('Está trabajando…'); return; } applyResult(Game.medicine()); return;
@@ -471,9 +503,76 @@
     }
   }
 
+  // 6) combate con amigos
+  const MOVES = [['Golpe', 'ICON_TRAIN'], ['Ingenio', 'ICON_ALBUM'], ['Truco', 'NOTE']];
+  const beatsMove = (a, b) => (a === 0 && b === 2) || (a === 2 && b === 1) || (a === 1 && b === 0);
+  function startBattleMode(r) {
+    ui.game = { type: 'battle', friend: r.friend, opp: r.opp, me: r.me, php: 30, ohp: 30, phase: 'ask', timer: 0, pm: 0, om: 0, res: '', pHit: false, oHit: false };
+    ui.mode = 'battle'; ui.pet.x = 100; ui.pet.dir = 1; ui.pet.moving = false; Sound.play('ok');
+  }
+  function battlePress(k) {
+    const g = ui.game;
+    if (k === 'back') return endGame(false, false, true);
+    const m = { left: 0, up: 1, right: 2 }[k];
+    if (g.phase !== 'ask' || m === undefined) return;
+    g.pm = m; g.om = Math.floor(Math.random() * 3); g.pHit = g.oHit = false;
+    const dmg = (st, mv) => Math.round(5 + st[mv] / 6 + Math.random() * 3);
+    if (g.pm === g.om) { const a = Math.round(dmg(g.me, g.pm) / 2), b = Math.round(dmg(g.opp, g.om) / 2); g.ohp = Math.max(0, g.ohp - a); g.php = Math.max(0, g.php - b); g.res = '¡Empate de jugadas!'; g.pHit = g.oHit = true; }
+    else if (beatsMove(g.pm, g.om)) { const d = dmg(g.me, g.pm); g.ohp = Math.max(0, g.ohp - d); g.res = `¡Aciertas! -${d}`; g.oHit = true; }
+    else { const d = dmg(g.opp, g.om); g.php = Math.max(0, g.php - d); g.res = `¡Te dan! -${d}`; g.pHit = true; }
+    g.phase = 'reveal'; g.timer = 1.5; Sound.play(g.oHit && !g.pHit ? 'catch' : 'hit'); ui.wobble = g.pHit ? 1 : 0;
+    spawn('star', g.oHit ? 235 : 100, GROUND - 70, 3);
+  }
+  function battleUpdate(dt) {
+    const g = ui.game; ui.pet.moving = g.phase === 'reveal' && g.oHit && !g.pHit && g.timer > .5;
+    if (g.phase !== 'reveal') return;
+    g.timer -= dt; if (g.timer > 0) return;
+    g.phase = 'ask';
+    if (g.ohp <= 0 || g.php <= 0) {
+      const win = g.ohp <= 0 && (g.php > 0 || g.ohp < g.php), id = g.friend.id, coins = Game.battleResult(win, id);
+      ui.game = null; ui.mode = 'main'; ui.pet.dir = 0; ui.pet.moving = false;
+      if (win) { say(`¡Victoria! +${coins} monedas`, 3); Sound.play('win'); spawn('heart', ui.pet.x, GROUND - 80, 5); spawn('coin', ui.pet.x, GROUND - 80, 4); startAnim({ dur: 1.6, mood: 'happy', hop: true }); }
+      else { say(`Derrota… +${coins} monedas por intentarlo`, 3); Sound.play('sad'); startAnim({ dur: 1.4, mood: 'sad' }); }
+    }
+  }
+  function drawBattleUI() {
+    const g = ui.game;
+    text(P().name, 12, 76, 11, '#fff', 'left'); bar(12, 90, 128, g.php, 30, '#4fcf7a');
+    text(g.friend.name, 308, 76, 11, '#fff', 'right'); bar(180, 90, 128, g.ohp, 30, '#ff6f6f');
+    text('VS', 160, 90, 13, '#fff', 'center', 900);
+    if (g.phase === 'ask') {
+      text('Elige tu jugada', 160, 120, 14, '#fff', 'center', 900);
+      [['Golpe ◀', 16, () => ICONS.train(c)], ['Ingenio ▲', 114, () => ICONS.album(c)], ['Truco ▶', 212, () => text('♪', 0, 0, 22, '#ff7fb0', 'center', 900)]].forEach(([l, x, ic]) => {
+        rrect(c, x, 300, 92, 50, 12); c.fillStyle = 'rgba(255,255,255,.92)'; c.fill(); c.save(); c.translate(x + 46, 315); ic(); c.restore(); text(l, x + 46, 338, 11, '#2b2440');
+      });
+      text('Golpe vence a Truco · Truco a Ingenio · Ingenio a Golpe', 160, 142, 9, '#fff', 'center', 700);
+    } else {
+      text(g.res, 160, 120, 16, g.pHit && !g.oHit ? '#ffd0d6' : '#fff7a8', 'center', 900);
+      text(`Tú: ${MOVES[g.pm][0]}  ·  Él: ${MOVES[g.om][0]}`, 160, 142, 12, '#fff', 'center', 800);
+    }
+  }
+  function drawThought() {
+    const p = P(), sp = SP();
+    if (!p.call || !p.alive || p.stage === 'egg' || p.work || ui.mode !== 'main' || ui.anim) return;
+    const x = Math.max(50, Math.min(270, ui.pet.x + 44)), y = GROUND - sp.ry * 2 - 34 + Math.sin(ui.t * 3) * 3;
+    c.save(); c.globalAlpha = .95;
+    ell(c, x - 22, y + 22, 3.5, 3.5, '#fff'); ell(c, x - 14, y + 14, 5, 5, '#fff'); ell(c, x, y, 21, 19, '#fff'); c.strokeStyle = 'rgba(40,20,70,.25)'; c.lineWidth = 1.5; c.stroke();
+    c.globalAlpha = 1; c.translate(x, y);
+    switch (p.call) {
+      case 'hungry': drawFoodItem(c, 'manzana', 0, 1, .85); break;
+      case 'sad': drawHeart(c, 0, 0, 9, '#9aa0c0'); c.strokeStyle = '#fff'; c.lineWidth = 2; c.beginPath(); c.moveTo(0, -6); c.lineTo(-2, 0); c.lineTo(2, 3); c.stroke(); break;
+      case 'sick': ICONS.med(c); break;
+      case 'sleep': c.beginPath(); c.arc(0, 0, 11, 0, 7); c.fillStyle = '#7b6fd6'; c.fill(); c.globalCompositeOperation = 'destination-out'; c.beginPath(); c.arc(5, -3, 9, 0, 7); c.fill(); break;
+      case 'dirty': ICONS.clean(c); break;
+      default: text('!', 0, 1, 22, '#ff4d6d', 'center', 900);
+    }
+    c.restore();
+  }
+
   /* ---------- entrada ---------- */
   function press(k) {
     Sound.unlock();
+    if (Game.cfg.music && !musicStarted) { musicStarted = true; Sound.setMusic(true); }
     if (k === 'start' && ui.mode === 'main') { activate('settings'); return; }
     if (k === 'select' && ui.mode === 'main') { activate('stats'); return; }
     switch (ui.mode) {
@@ -512,9 +611,11 @@
       case 'hilo': hiloPress(k); break;
       case 'rps': rpsPress(k); break;
       case 'memory': memoryPress(k); break;
+      case 'battle': battlePress(k); break;
     }
   }
 
+  let musicStarted = false;
   const KEYMAP = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', KeyA: 'left', KeyD: 'right', KeyW: 'up', KeyS: 'down',
     KeyZ: 'ok', Enter: 'ok', Space: 'ok', KeyX: 'back', Escape: 'back', Backspace: 'back', Tab: 'start', ShiftLeft: 'select', ShiftRight: 'select' };
   addEventListener('keydown', e => {
@@ -532,10 +633,26 @@
     btn.addEventListener('pointerdown', e => {
       e.preventDefault(); try { btn.setPointerCapture(e.pointerId); } catch (er) { /* noop */ }
       ui.held[k] = true; btn.classList.add('on'); press(k); vibrate(8);
-      if (['left', 'right', 'up', 'down'].includes(k)) t1 = setTimeout(() => { t2 = setInterval(() => { if (ui.mode !== 'catch' && ui.mode !== 'guess' && ui.mode !== 'hilo' && ui.mode !== 'rps') press(k); }, 130); }, 380);
+      if (['left', 'right', 'up', 'down'].includes(k)) t1 = setTimeout(() => { t2 = setInterval(() => { if (!['catch', 'guess', 'hilo', 'rps', 'battle'].includes(ui.mode)) press(k); }, 130); }, 380);
     });
     ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => btn.addEventListener(ev, stop));
     btn.addEventListener('contextmenu', e => e.preventDefault());
+  });
+  let lastTap = 0;
+  cv.addEventListener('pointerdown', e => {
+    Sound.unlock();
+    if (Game.cfg.music && !musicStarted) { musicStarted = true; Sound.setMusic(true); }
+    if (ui.mode !== 'main') return;
+    const r = cv.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * W, y = (e.clientY - r.top) / r.height * H, p = P();
+    if (y < 46) {
+      const n = MENU.length, off = Math.max(0, Math.min(n - 8, ui.cursor - 3)), j = Math.floor((x - 8) / 38.5);
+      if (j >= 0 && j < 8) { const i = off + j; if (i === ui.cursor) activate(MENU[i].id); else { ui.cursor = i; Sound.play('nav'); } }
+      return;
+    }
+    if (!p.alive || p.work || Date.now() - lastTap < 900) return;
+    if (p.stage === 'egg') { if (Math.abs(x - 160) < 50 && y > GROUND - 100) { lastTap = Date.now(); Game.warmEgg(); ui.wobble = 1; Sound.play('ok'); } return; }
+    const sp = SP();
+    if (Math.abs(x - ui.pet.x) < sp.rx * 1.15 && y > GROUND - sp.ry * 2.3 && y < GROUND + 8) { lastTap = Date.now(); applyResult(Game.cuddle()); }
   });
   document.addEventListener('gesturestart', e => e.preventDefault());
   document.addEventListener('dblclick', e => e.preventDefault());
@@ -545,7 +662,9 @@
     while (Game.events.length) {
       const ev = Game.events.shift(), p = P();
       switch (ev.type) {
-        case 'call': sayQ(CALL_TEXT[ev.call] || '¡Atención!', 3); Sound.play('call'); vibrate([60, 60, 60]); break;
+        case 'call': sayQ(CALL_TEXT[ev.call] || '¡Atención!', 3); Sound.play('call'); vibrate([60, 60, 60]);
+          try { if (Game.cfg.notify && document.hidden && 'Notification' in window && Notification.permission === 'granted' && ev.call !== 'fake') new Notification('Cuquigotxi', { body: `${p.name}: ${CALL_TEXT[ev.call]}`, icon: 'icon.svg' }); } catch (e) { /* noop */ }
+          break;
         case 'poop': Sound.play('poop'); break;
         case 'sick': sayQ('¡Se ha puesto enfermo!', 3); Sound.play('sad'); break;
         case 'hurt': Sound.play('sad'); ui.wobble = 1; break;
@@ -554,7 +673,8 @@
         case 'die': Sound.play('die'); ui.anim = null; if (ui.game) { ui.game = null; } ui.mode = 'main'; ui.list = null; ui.stack = []; say(`${p.name} nos ha dejado… (${ev.cause})`, 6); break;
         case 'birthday': sayQ(`¡Cumpleaños! Día ${ev.day} · +5 monedas`, 3.5); spawn('confetti', ui.pet.x, GROUND - 130, 30); Sound.play('win'); break;
         case 'workdone': sayQ(`¡Vuelve de ${ev.name}! +${ev.pay} monedas`, 3.5); Sound.play('coin'); spawn('coin', ui.pet.x, GROUND - 80, 5); break;
-        case 'daily': sayQ(`Regalo diario: +${ev.coins} monedas y ${ev.item}`, 4); Sound.play('buy'); break;
+        case 'daily': sayQ(`Regalo diario: +${ev.coins} monedas y ${ev.item}${ev.streak > 1 ? ` · racha ${ev.streak}` : ''}`, 4); Sound.play('buy'); break;
+        case 'legacy': sayQ('Hereda habilidades de su antecesor · +30 monedas', 4); Sound.play('happy'); break;
         case 'ach': sayQ(`Logro: ${ev.ach.name} (+${ev.ach.coins}c)`, 3.5); Sound.play('ach'); spawn('star', 160, 100, 8); break;
       }
     }
@@ -611,10 +731,11 @@
       row(5, 'Comida favorita', y => { text(FOODS[p.fav].name, 288, y, 12.5, '#6a7cff', 'right'); });
       row(6, 'Monedas', y => { drawCoin(c, 190, y, 7); text(String(prof.coins), 288, y, 12.5, '#6a7cff', 'right'); });
       row(7, 'Minijuegos ganados', y => text(String(prof.c.wins), 288, y, 12.5, '#6a7cff', 'right'));
-      text(TRAITS[p.trait].desc, 160, 316, 10, '#8a82aa', 'center', 700);
+      row(8, 'Generación', y => text(String(prof.gen), 288, y, 12.5, '#6a7cff', 'right'));
+      text(TRAITS[p.trait].desc, 160, 321, 10, '#8a82aa', 'center', 700);
     }
     const h = Game.history;
-    text(ui.statPage === 0 ? (h.length ? `Recuerdos: ${h.slice(0, 2).map(x => `${x.name} (${x.days}d)`).join(', ')}` : '◀ ▶ cambiar página · B volver') : '◀ ▶ cambiar página · B volver', 160, 331, 10, '#8a82aa', 'center', 700);
+    text(ui.statPage === 0 ? (h.length ? `Recuerdos: ${h.slice(0, 2).map(x => `${x.name} (${x.days}d)`).join(', ')}` : '◀ ▶ cambiar página · B volver') : '◀ ▶ cambiar página · B volver', 160, 334, 10, '#8a82aa', 'center', 700);
   }
   function drawAlbum() {
     const prof = PR();
@@ -633,8 +754,8 @@
   function drawHelp() {
     panel(14, 64, 292, 276);
     text('Ayuda', 160, 86, 16, TITLE(), 'center', 900);
-    const lines = ['◀ ▶ mover el menú · A elegir · B volver', 'START ajustes · SELECT estado', '', 'Dale de comer, límpialo y juega con él.', 'Apaga la luz de noche para que duerma.', 'Si te llama sin motivo, regáñalo.', '', 'Gana monedas con juegos, entrenos y trabajo.', 'Cómprale ropa, juguetes y fondos nuevos.', 'Lo que haga de pequeño decide en qué evoluciona.', 'Descubre las 13 criaturas en el Álbum.'];
-    lines.forEach((s, i) => text(s, 160, 112 + i * 18, 11, '#2b2440', 'center', 700));
+    const lines = ['◀ ▶ mover el menú · A elegir · B volver', 'START ajustes · SELECT estado · también puedes tocar', '', 'Dale de comer, límpialo y juega con él.', 'Apaga la luz de noche para que duerma.', 'Si te llama sin motivo, regáñalo.', 'Toca a tu mascota para acariciarla.', '', 'Cumple misiones, juega, entrena y trabaja.', 'Cómprale ropa, juguetes y fondos nuevos.', 'Combate con tus amigos o añade uno con código.', 'Lo que haga de pequeño decide su evolución.', 'Descubre las 13 criaturas en el Álbum.'];
+    lines.forEach((s, i) => text(s, 160, 108 + i * 17, 10.5, '#2b2440', 'center', 700));
     text('A / B: cerrar', 160, 328, 10.5, '#8a82aa', 'center', 700);
   }
 
@@ -715,6 +836,8 @@
         else text('♪', x, y, 28, '#ff7fb0', 'center', 900);
       }
       if (ui.mode === 'catch' && ui.game) drawCatchWorld();
+      if (ui.mode === 'battle' && ui.game) { const g = ui.game; drawPet(c, SPECIES[g.friend.species], { x: 235, y: GROUND, t: ui.t, mood: g.phase === 'reveal' && g.oHit ? 'sad' : 'neutral', dir: -1, scale: .9, hop: g.phase === 'reveal' && g.pHit && !g.oHit && g.timer > .5, outline: retro() }); }
+      drawThought();
     }
     drawParts();
     Scene.drawWeather(c, ui.t, ui.dt, Game.cfg, prof.bg);
@@ -766,11 +889,13 @@
       bar(60, 196, 200, w.total - w.left, w.total, '#ff7fb0');
     }
     drawGameUI();
+    if (ui.mode === 'battle' && ui.game) drawBattleUI();
+    if (Game.cfg.paused) { rrect(c, 130, 76, 60, 18, 9); c.fillStyle = 'rgba(255,92,138,.9)'; c.fill(); text('PAUSA', 160, 85.5, 11, '#fff', 'center', 900); }
     if (ui.mode === 'list') drawList();
     if (ui.mode === 'stats') drawStats();
     if (ui.mode === 'album') drawAlbum();
     if (ui.mode === 'help') drawHelp();
-    const gameMode = ['guess', 'catch', 'hilo', 'rps', 'memory', 'stats', 'album', 'help'].includes(ui.mode);
+    const gameMode = ['guess', 'catch', 'hilo', 'rps', 'memory', 'battle', 'stats', 'album', 'help'].includes(ui.mode);
     if (!p.alive && ui.mode === 'main' && ui.toastT <= 0) { ui.toast = 'Pulsa A para un huevo nuevo'; ui.toastT = .1; }
     if (ui.toastT > 0 && ui.toast && !gameMode) {
       c.font = '800 13px "Nunito",sans-serif'; const w = Math.min(304, c.measureText(ui.toast).width + 28);
@@ -797,6 +922,7 @@
     if (ui.mode === 'hilo') hiloUpdate(dt);
     if (ui.mode === 'rps') rpsUpdate(dt);
     if (ui.mode === 'memory') memoryUpdate(dt);
+    if (ui.mode === 'battle') battleUpdate(dt);
     ui.spawnT -= dt;
     if (ui.spawnT <= 0 && p.alive && p.stage !== 'egg') {
       ui.spawnT = 1.4;

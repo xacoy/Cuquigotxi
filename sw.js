@@ -1,4 +1,4 @@
-const CACHE = 'cuquigotxi-v2';
+const CACHE = 'cuquigotxi-v3';
 const FILES = ['./', 'index.html', 'style.css', 'icon.svg', 'manifest.webmanifest',
   'js/audio.js', 'js/data.js', 'js/sprites.js', 'js/sprites2.js', 'js/scene.js', 'js/game.js', 'js/ui.js'];
 self.addEventListener('install', e => {

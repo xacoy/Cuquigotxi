@@ -55,8 +55,35 @@ const Sound = (() => {
       o.start(t0 + s); o.stop(t0 + s + d + 0.02);
     }
   }
+  /* Música de fondo procedural (pentatónica, sin archivos) */
+  let musicOn = false, musicTimer = null, step = 0, nextAt = 0;
+  const SCALE = [261.63, 293.66, 329.63, 392, 440, 523.25, 587.33, 659.25];
+  const BASS = [130.81, 146.83, 98, 110];
+  const MEL = [0, 2, 4, 2, 5, 4, 2, 1, 0, 2, 4, 7, 5, 4, 2, 4, 3, 4, 5, 4, 2, 1, 0, 1, 2, 4, 5, 4, 2, 0, 1, 0];
+  function note(c, f, t, d, type, v) {
+    const o = c.createOscillator(), g = c.createGain(); o.type = type; o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, v * vol), t + .02); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t + d + .02);
+  }
+  function schedule() {
+    const c = unlock(); if (!c || !musicOn || !enabled) return;
+    const beat = .26;
+    if (nextAt < c.currentTime) nextAt = c.currentTime + .05;
+    while (nextAt < c.currentTime + .6) {
+      const i = step % MEL.length;
+      note(c, SCALE[MEL[i]], nextAt, beat * .9, 'triangle', .035);
+      if (i % 4 === 0) note(c, BASS[Math.floor(i / 8) % BASS.length], nextAt, beat * 3.2, 'sine', .05);
+      nextAt += beat; step++;
+    }
+  }
+  function setMusic(on) {
+    musicOn = !!on; clearInterval(musicTimer);
+    if (musicOn) { nextAt = 0; schedule(); musicTimer = setInterval(schedule, 200); }
+  }
+  document.addEventListener('visibilitychange', () => { if (document.hidden) clearInterval(musicTimer); else if (musicOn) { nextAt = 0; musicTimer = setInterval(schedule, 200); } });
+
   return {
-    play, unlock,
+    play, unlock, setMusic,
     setEnabled(v) { enabled = !!v; },
     setVolume(v) { vol = Math.max(0, Math.min(2, v)); },
     get enabled() { return enabled; },
